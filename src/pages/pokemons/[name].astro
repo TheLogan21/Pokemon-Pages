@@ -3,6 +3,8 @@ import type { GetStaticPaths } from "astro";
 import MainLayout from "../../Layouts/MainLayout.astro";
 import PokemonCard from "../../components/pokemons/PokemonCard.astro";
 import type { PokemonListResponse } from "../../interfaces/pokemon-list.response";
+import Title from "@components/shared/Title.astro";
+import { Icon } from "astro-icon/components";
 
 export const getStaticPaths = (async () => {
     const resp = await fetch("https://pokeapi.co/api/v2/pokemon?limit=151");
@@ -28,9 +30,25 @@ const audioPks = `https://raw.githubusercontent.com/PokeAPI/cries/main/cries/pok
     image={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`}
 >
     <section class="mt-10 mx-10 flex flex-col justify-center items-center">
-        <div>
-            <a href="/" class="underline text-blue-500">Regresar</a>
-            <h1 class="text-5x1 capitalize">{name}</h1>
+        <div class="flex flex-row">
+            <div>
+                <button
+                    onclick="history.back()"
+                    class="mb-2 hover:cursor-pointer bg-blue-900 rounded-md p-2 content-center font-bold"
+                    >Regresar</button
+                >
+
+                <Title>{name}</Title>
+            </div>
+            <button
+                data-name={name}
+                data-id={id}
+                id="btn-favorite"
+                class="ml-4 mt-7 hover:cursor-pointer hover:animate-pulse"
+            >
+                <Icon data-empty name="heart-empty" size={55} />
+                <Icon data-full class="hidden" name="heart-full" size={55} />
+            </button>
         </div>
         <PokemonCard name={name} url={url} isBig={true} />
         <audio controls class="mt-5">
@@ -39,3 +57,63 @@ const audioPks = `https://raw.githubusercontent.com/PokeAPI/cries/main/cries/pok
         </audio>
     </section>
 </MainLayout>
+
+<script>
+    import { fade } from "astro:transitions";
+
+    interface FavoritePokemon {
+        name: string;
+        id: number;
+    }
+    const handlePageLoad = () => {
+        let favortePokemons: FavoritePokemon[] = JSON.parse(
+            localStorage.getItem("favorites") ?? "[]",
+        );
+
+        const btnFavorite = document.querySelector(
+            "#btn-favorite",
+        ) as HTMLButtonElement;
+        if (!btnFavorite) return;
+        const name = btnFavorite.dataset.name ?? "";
+        const id = btnFavorite.dataset.id ?? "";
+        const isFavorite = favortePokemons.some((fav) => fav.name == name);
+        const heartEmpty = btnFavorite.querySelector(
+            "[data-empty]",
+        ) as HTMLAnchorElement;
+        const heartFull = btnFavorite.querySelector(
+            "[data-full]",
+        ) as HTMLAnchorElement;
+
+        // funcion validacion
+        if (isFavorite) {
+            // Si es favorito, muestra el corazón lleno y oculta el vacío.
+            heartEmpty.classList.add("hidden");
+            heartFull.classList.remove("hidden");
+        }
+        const toggleFavorite = () => {
+            const isFavorite = favortePokemons.some((fav) => fav.name == name);
+            if (isFavorite) {
+                //remover
+                favortePokemons = favortePokemons.filter(
+                    (fav) => fav.name !== name,
+                );
+            } else {
+                //agregar
+                favortePokemons.push({
+                    id: +id,
+                    name: name,
+                });
+            }
+
+            localStorage.setItem("favorites", JSON.stringify(favortePokemons));
+        };
+
+        btnFavorite.addEventListener("click", () => {
+            heartEmpty.classList.toggle("hidden");
+            heartFull.classList.toggle("hidden");
+            toggleFavorite();
+        });
+    };
+
+    document.addEventListener("astro:page-load", handlePageLoad);
+</script>

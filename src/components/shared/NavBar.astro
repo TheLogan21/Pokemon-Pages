@@ -14,17 +14,22 @@ const currenteUrl = Astro.url.pathname;
     >
         {
             links.map(({ href, text }) => (
-                <a
-                    href={href}
-                    class:list={[
-                        "text-gray-800 dark:text-gray-200  mx-1.5 sm:mx-6",
-                        {
-                            "border-b-2 border-blue-500": currenteUrl == href,
-                        },
-                    ]}
-                >
-                    {text}
-                </a>
+                <div>
+                    <a
+                        href={href}
+                        class="text-gray-800 dark:text-gray-200  mx-1.5 sm:mx-6"
+                    >
+                        {text}
+                    </a>
+                    {currenteUrl == href ? (
+                        <div
+                            transition:name="Link-path"
+                            class="border-b-2 border-blue-500 mx-4"
+                        />
+                    ) : (
+                        <div class="border-b-2 border-transparent" />
+                    )}
+                </div>
             ))
         }
     </div>
